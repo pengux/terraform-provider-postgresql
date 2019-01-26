@@ -6,6 +6,10 @@ language: go
 go:
   - "1.11.x"
 
+env:
+  - PGVERSION=latest
+  - PGVERSION=10
+
 install:
 # This script is used by the Travis build to install a cookie for
 # go.googlesource.com so rate limits are higher when using `go get` to fetch
@@ -19,10 +23,12 @@ script:
 - make vendor-status
 - make vet
 - make website-test
+- source tests/env.sh
+- docker-compose up -d
 
 branches:
   only:
-  - master
+  - tmp
 matrix:
   fast_finish: true
   allow_failures:
