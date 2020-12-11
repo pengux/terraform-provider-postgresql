@@ -226,13 +226,6 @@ func resourcePostgreSQLRoleCreate(d *schema.ResourceData, meta interface{}) erro
 			case opt.hclKey == rolePasswordAttr:
 				if strings.ToUpper(v.(string)) == "NULL" {
 					createOpts = append(createOpts, "PASSWORD NULL")
-				} else {
-					if d.Get(roleEncryptedPassAttr).(bool) {
-						createOpts = append(createOpts, "ENCRYPTED")
-					} else {
-						createOpts = append(createOpts, "UNENCRYPTED")
-					}
-					createOpts = append(createOpts, fmt.Sprintf("%s '%s'", opt.sqlKey, pqQuoteLiteral(val)))
 				}
 			case opt.hclKey == roleValidUntilAttr:
 				switch {

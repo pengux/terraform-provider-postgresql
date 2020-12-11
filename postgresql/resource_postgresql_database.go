@@ -152,14 +152,12 @@ func createDatabase(c *Client, d *schema.ResourceData) error {
 	case ok:
 		fmt.Fprint(b, " OWNER ", pq.QuoteIdentifier(v.(string)))
 	default:
-		// No owner specified in the config, default to using
-		// the connecting username.
-		fmt.Fprint(b, " OWNER ", pq.QuoteIdentifier(currentUser))
+		// Fix compatibility issue for CockroachDB, don't set OWNER
 	}
 
 	switch v, ok := d.GetOk(dbTemplateAttr); {
 	case ok && strings.ToUpper(v.(string)) == "DEFAULT":
-		fmt.Fprint(b, " TEMPLATE DEFAULT")
+		// Fix compatibility issue for CockroachDB, don't set OWNER
 	case ok:
 		fmt.Fprint(b, " TEMPLATE ", pq.QuoteIdentifier(v.(string)))
 	case v.(string) == "":
@@ -168,7 +166,7 @@ func createDatabase(c *Client, d *schema.ResourceData) error {
 
 	switch v, ok := d.GetOk(dbEncodingAttr); {
 	case ok && strings.ToUpper(v.(string)) == "DEFAULT":
-		fmt.Fprintf(b, " ENCODING DEFAULT")
+		// Fix compatibility issue for CockroachDB, don't set OWNER
 	case ok:
 		fmt.Fprintf(b, " ENCODING '%s' ", pqQuoteLiteral(v.(string)))
 	case v.(string) == "":
@@ -179,7 +177,7 @@ func createDatabase(c *Client, d *schema.ResourceData) error {
 	// This will use the default one (usually the one defined in the template database)
 	switch v, ok := d.GetOk(dbCollationAttr); {
 	case ok && strings.ToUpper(v.(string)) == "DEFAULT":
-		fmt.Fprintf(b, " LC_COLLATE DEFAULT")
+		// Fix compatibility issue for CockroachDB, don't set OWNER
 	case ok:
 		fmt.Fprintf(b, " LC_COLLATE '%s' ", pqQuoteLiteral(v.(string)))
 	}
@@ -188,14 +186,14 @@ func createDatabase(c *Client, d *schema.ResourceData) error {
 	// This will use the default one (usually the one defined in the template database)
 	switch v, ok := d.GetOk(dbCTypeAttr); {
 	case ok && strings.ToUpper(v.(string)) == "DEFAULT":
-		fmt.Fprintf(b, " LC_CTYPE DEFAULT")
+		// Fix compatibility issue for CockroachDB, don't set OWNER
 	case ok:
 		fmt.Fprintf(b, " LC_CTYPE '%s' ", pqQuoteLiteral(v.(string)))
 	}
 
 	switch v, ok := d.GetOk(dbTablespaceAttr); {
 	case ok && strings.ToUpper(v.(string)) == "DEFAULT":
-		fmt.Fprint(b, " TABLESPACE DEFAULT")
+		// Fix compatibility issue for CockroachDB, don't set OWNER
 	case ok:
 		fmt.Fprint(b, " TABLESPACE ", pq.QuoteIdentifier(v.(string)))
 	}
