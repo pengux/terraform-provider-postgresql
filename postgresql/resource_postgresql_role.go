@@ -237,7 +237,7 @@ func resourcePostgreSQLRoleCreate(d *schema.ResourceData, meta interface{}) erro
 			case opt.hclKey == roleValidUntilAttr:
 				switch {
 				case v.(string) == "", strings.ToLower(v.(string)) == "infinity":
-					createOpts = append(createOpts, fmt.Sprintf("%s '%s'", opt.sqlKey, "infinity"))
+					createOpts = append(createOpts, fmt.Sprintf("%s '%s'", opt.sqlKey, "3000-01-01T00:00:00Z"))
 				default:
 					createOpts = append(createOpts, fmt.Sprintf("%s '%s'", opt.sqlKey, pqQuoteLiteral(val)))
 				}
@@ -249,10 +249,20 @@ func resourcePostgreSQLRoleCreate(d *schema.ResourceData, meta interface{}) erro
 
 	for _, opt := range intOpts {
 		val := d.Get(opt.hclKey).(int)
+		// Make the "CONNECTION LIMIT" attribute in the query optional
+		if opt.hclKey == roleConnLimitAttr && val == -1 {
+			continue
+		}
 		createOpts = append(createOpts, fmt.Sprintf("%s %d", opt.sqlKey, val))
 	}
 
 	for _, opt := range boolOpts {
+		// Omit options that are not supported by CockroachDB
+		switch opt.hclKey {
+		case roleSuperuserAttr, roleInheritAttr, roleBypassRLSAttr, roleReplicationAttr:
+			continue
+		}
+
 		if opt.hclKey == roleEncryptedPassAttr {
 			// This attribute is handled above in the stringOpts
 			// loop.
@@ -387,7 +397,7 @@ func resourcePostgreSQLRoleReadImpl(c *Client, d *schema.ResourceData) error {
 		"rolcreatedb",
 		"rolcanlogin",
 		"rolconnlimit",
-		`COALESCE(rolvaliduntil::TEXT, 'infinity')`,
+		`COALESCE(rolvaliduntil::TEXT, '3000-01-01T00:00:00Z')`, // Swap "infinity" with "3000-01-01T00:00:00Z" for compatibility with CockroachDB
 		"rolconfig",
 	}
 
@@ -837,7 +847,7 @@ func setRoleValidUntil(txn *sql.Tx, d *schema.ResourceData) error {
 	if validUntil == "" {
 		return nil
 	} else if strings.ToLower(validUntil) == "infinity" {
-		validUntil = "infinity"
+		validUntil = "3000-01-01T00:00:00Z"
 	}
 
 	roleName := d.Get(roleNameAttr).(string)
@@ -916,7 +926,8 @@ func alterSearchPath(txn *sql.Tx, d *schema.ResourceData) error {
 			searchPathString[i] = pq.QuoteIdentifier(searchPathPart.(string))
 		}
 	} else {
-		searchPathString = []string{"DEFAULT"}
+		// Fix compatibility with CockroachDB
+		return nil
 	}
 	searchPath := strings.Join(searchPathString[:], ", ")
 
@@ -943,13 +954,8 @@ func setStatementTimeout(txn *sql.Tx, d *schema.ResourceData) error {
 		if _, err := txn.Exec(sql); err != nil {
 			return fmt.Errorf("could not set statement_timeout %d for %s: %w", statementTimeout, roleName, err)
 		}
-	} else {
-		sql := fmt.Sprintf(
-			"ALTER ROLE %s RESET statement_timeout", pq.QuoteIdentifier(roleName),
-		)
-		if _, err := txn.Exec(sql); err != nil {
-			return fmt.Errorf("could not reset statement_timeout for %s: %w", roleName, err)
-		}
 	}
+
+	// Fix compatibility for CockroachDB
 	return nil
 }
