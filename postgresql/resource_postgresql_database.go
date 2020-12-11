@@ -148,70 +148,77 @@ func createDatabase(c *Client, d *schema.ResourceData) error {
 
 	// Handle each option individually and stream results into the query
 	// buffer.
-	switch v, ok := d.GetOk(dbOwnerAttr); {
-	case ok:
-		fmt.Fprint(b, " OWNER ", pq.QuoteIdentifier(v.(string)))
-	default:
-		// Fix compatibility issue for CockroachDB, don't set OWNER
-	}
+	// switch v, ok := d.GetOk(dbOwnerAttr); {
+	// case ok:
+	// 	// Fix compatibility issue for CockroachDB
+	// default:
+	// 	// Fix compatibility issue for CockroachDB
+	// }
 
 	switch v, ok := d.GetOk(dbTemplateAttr); {
 	case ok && strings.ToUpper(v.(string)) == "DEFAULT":
-		// Fix compatibility issue for CockroachDB, don't set OWNER
+		// Fix compatibility issue for CockroachDB
 	case ok:
-		fmt.Fprint(b, " TEMPLATE ", pq.QuoteIdentifier(v.(string)))
+		// Fix compatibility issue for CockroachDB
+		// fmt.Fprint(b, " TEMPLATE ", pq.QuoteIdentifier(v.(string)))
 	case v.(string) == "":
-		fmt.Fprint(b, " TEMPLATE template0")
+		// Fix compatibility issue for CockroachDB
+		// fmt.Fprint(b, " TEMPLATE template0")
 	}
 
 	switch v, ok := d.GetOk(dbEncodingAttr); {
 	case ok && strings.ToUpper(v.(string)) == "DEFAULT":
-		// Fix compatibility issue for CockroachDB, don't set OWNER
+		// Fix compatibility issue for CockroachDB
 	case ok:
-		fmt.Fprintf(b, " ENCODING '%s' ", pqQuoteLiteral(v.(string)))
+		// Fix compatibility issue for CockroachDB
+		// fmt.Fprintf(b, " ENCODING '%s' ", pqQuoteLiteral(v.(string)))
 	case v.(string) == "":
-		fmt.Fprint(b, ` ENCODING 'UTF8'`)
+		// Fix compatibility issue for CockroachDB
+		// fmt.Fprint(b, ` ENCODING 'UTF8'`)
 	}
 
 	// Don't specify LC_COLLATE if user didn't specify it
 	// This will use the default one (usually the one defined in the template database)
 	switch v, ok := d.GetOk(dbCollationAttr); {
 	case ok && strings.ToUpper(v.(string)) == "DEFAULT":
-		// Fix compatibility issue for CockroachDB, don't set OWNER
+		// Fix compatibility issue for CockroachDB
 	case ok:
-		fmt.Fprintf(b, " LC_COLLATE '%s' ", pqQuoteLiteral(v.(string)))
+		// Fix compatibility issue for CockroachDB
+		// fmt.Fprintf(b, " LC_COLLATE '%s' ", pqQuoteLiteral(v.(string)))
 	}
 
 	// Don't specify LC_CTYPE if user didn't specify it
 	// This will use the default one (usually the one defined in the template database)
 	switch v, ok := d.GetOk(dbCTypeAttr); {
 	case ok && strings.ToUpper(v.(string)) == "DEFAULT":
-		// Fix compatibility issue for CockroachDB, don't set OWNER
+		// Fix compatibility issue for CockroachDB
 	case ok:
-		fmt.Fprintf(b, " LC_CTYPE '%s' ", pqQuoteLiteral(v.(string)))
+		// Fix compatibility issue for CockroachDB
+		// fmt.Fprintf(b, " LC_CTYPE '%s' ", pqQuoteLiteral(v.(string)))
 	}
 
 	switch v, ok := d.GetOk(dbTablespaceAttr); {
 	case ok && strings.ToUpper(v.(string)) == "DEFAULT":
-		// Fix compatibility issue for CockroachDB, don't set OWNER
+		// Fix compatibility issue for CockroachDB
 	case ok:
-		fmt.Fprint(b, " TABLESPACE ", pq.QuoteIdentifier(v.(string)))
+		// Fix compatibility issue for CockroachDB
+		// fmt.Fprint(b, " TABLESPACE ", pq.QuoteIdentifier(v.(string)))
 	}
 
-	if c.featureSupported(featureDBAllowConnections) {
-		val := d.Get(dbAllowConnsAttr).(bool)
-		fmt.Fprint(b, " ALLOW_CONNECTIONS ", val)
-	}
+	// if c.featureSupported(featureDBAllowConnections) {
+	// 	val := d.Get(dbAllowConnsAttr).(bool)
+	// 	fmt.Fprint(b, " ALLOW_CONNECTIONS ", val)
+	// }
 
 	{
 		val := d.Get(dbConnLimitAttr).(int)
 		fmt.Fprint(b, " CONNECTION LIMIT ", val)
 	}
 
-	if c.featureSupported(featureDBIsTemplate) {
-		val := d.Get(dbIsTemplateAttr).(bool)
-		fmt.Fprint(b, " IS_TEMPLATE ", val)
-	}
+	// if c.featureSupported(featureDBIsTemplate) {
+	// 	val := d.Get(dbIsTemplateAttr).(bool)
+	// 	fmt.Fprint(b, " IS_TEMPLATE ", val)
+	// }
 
 	sql := b.String()
 	if _, err := c.DB().Exec(sql); err != nil {
